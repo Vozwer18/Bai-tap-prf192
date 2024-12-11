@@ -6,11 +6,13 @@
 
 // Cau truc de luu thong tin hang hoa
 typedef struct {
-    char maSanPham[11];  // Ma san pham (toi da 10 ky tu + 1 cho dau ket thuc chuoi '\0')
-    char tenSanPham[51]; // Ten san pham (toi da 50 ky tu + 1 cho dau ket thuc chuoi '\0')
-    char khoiLuong[21];  // Khoi luong (toi da 20 ky tu + 1 cho dau ket thuc chuoi '\0')
-    int soLuong;         // So luong hang hoa (toi da 20)
+    char maSanPham[11];
+    char tenSanPham[51];
+    char khoiLuong[21];
+    int soLuong;
+    char ngayNhap[15]; //    date : dd/mm/yyyy
 } HangHoa;
+
 
 // Mang luu danh sach hang hoa trong moi kho nho
 HangHoa khoSmall[MAX_KHO][MAX_ITEMS];
@@ -28,17 +30,18 @@ void docDuLieuKho() {
             printf("Khong the mo file %s.\n", tenFile);
             continue;
         }
+	int i = 0;
+        while (fscanf(file, "%d %10s %50s %20s %d %10s",
+              &i,
+              khoSmall[kho][i].maSanPham,
+              khoSmall[kho][i].tenSanPham,
+              khoSmall[kho][i].khoiLuong,
+              &khoSmall[kho][i].soLuong,
+              khoSmall[kho][i].ngayNhap) != EOF) {
+    i++;
+    if (i >= MAX_ITEMS) break;
+}
 
-        int i = 0;
-        while (fscanf(file, "%d %10s %50s %20s %d",  // Doc du lieu voi gioi han ky tu
-                       &i, // So thu tu khong can dung
-                       khoSmall[kho][i].maSanPham, 
-                       khoSmall[kho][i].tenSanPham, 
-                       khoSmall[kho][i].khoiLuong, 
-                       &khoSmall[kho][i].soLuong) != EOF) {
-            i++;
-            if (i >= MAX_ITEMS) break; // Dam bao khong vuot qua so luong cho toi da trong kho
-        }
         soLuongHangHoa[kho] = i; // Luu so luong hang hoa trong kho
         fclose(file);
     }
@@ -90,24 +93,57 @@ void kiemTraTongKho() {
 
 // Ham tim kiem tren tong kho
 void timKiemTrenTongKho() {
-    char tenTimKiem[50];
-    printf("\nNhap ten hang hoa can tim: ");
-    scanf("%s", tenTimKiem);
-    int i,j;
+    int luaChon;
+    printf("\nTim kiem theo:\n");
+    printf("1. Ten san pham\n");
+    printf("2. Ngay nhap kho\n");
+    printf("Nhap lua chon cua ban: ");
+    scanf("%d", &luaChon);
 
-    int timThay = 0;
-    for (i = 0; i < MAX_KHO; i++) {
-        for (j = 0; j < soLuongHangHoa[i]; j++) {
-            if (strcmp(khoSmall[i][j].tenSanPham, tenTimKiem) == 0) {
-                printf("Hang hoa \"%s\" (Ma: %s) co trong kho %d voi so luong: %d\n", 
-                       khoSmall[i][j].tenSanPham, khoSmall[i][j].maSanPham, i + 1, khoSmall[i][j].soLuong);
-                timThay = 1;
-                break;
+    if (luaChon == 1) {
+        char tenTimKiem[51];
+        printf("\nNhap ten hang hoa can tim: ");
+        scanf(" %50[^\n]", tenTimKiem);
+
+        int timThay = 0;
+    int i,j;
+        for (i = 0; i < MAX_KHO; i++) {
+            for (j = 0; j < soLuongHangHoa[i]; j++) {
+                if (strcmp(khoSmall[i][j].tenSanPham, tenTimKiem) == 0) {
+                    printf("Hang hoa \"%s\" (Ma: %s) co trong kho %d, So luong: %d, Ngay nhap: %s\n", 
+                           khoSmall[i][j].tenSanPham, khoSmall[i][j].maSanPham, i + 1, 
+                           khoSmall[i][j].soLuong, khoSmall[i][j].ngayNhap);
+                    timThay = 1;
+                }
             }
         }
-    }
-    if (!timThay) {
-        printf("Khong tim thay hang hoa \"%s\" trong tong kho.\n", tenTimKiem);
+        if (!timThay) {
+            printf("Khong tim thay hang hoa \"%s\" trong tong kho.\n", tenTimKiem);
+        }
+
+    } else if (luaChon == 2) {
+        char ngayTimKiem[11];
+        printf("\nNhap ngay nhap kho can tim (dd/mm/yyyy): ");
+        scanf("%s", ngayTimKiem);
+
+        int timThay = 0;
+    int i,j;
+        for (i = 0; i < MAX_KHO; i++) {
+            for (j = 0; j < soLuongHangHoa[i]; j++) {
+                if (strcmp(khoSmall[i][j].ngayNhap, ngayTimKiem) == 0) {
+                    printf("Hang hoa \"%s\" (Ma: %s) co trong kho %d, So luong: %d, Ngay nhap: %s\n", 
+                           khoSmall[i][j].tenSanPham, khoSmall[i][j].maSanPham, i + 1, 
+                           khoSmall[i][j].soLuong, khoSmall[i][j].ngayNhap);
+                    timThay = 1;
+                }
+            }
+        }
+        if (!timThay) {
+            printf("Khong tim thay hang hoa nhap vao ngay \"%s\" trong tong kho.\n", ngayTimKiem);
+        }
+
+    } else {
+        printf("Lua chon khong hop le.\n");
     }
 }
 
@@ -146,32 +182,64 @@ void menuKhoNho() {
     do {
         printf("\n--- MENU KHO NHO ---\n");
         printf("1. Danh sach kho\n");
-        printf("2. Kiem tra kho\n");
-        printf("3. Di chuyen toan bo hang sang kho khac\n");
-        printf("4. Them hang vao kho\n");
-        printf("5. Xuat hang di kho khac\n");
+        printf("2. Di chuyen toan bo hang sang kho khac\n");
+        printf("3. Them hang vao kho\n");
+        printf("4. Xuat hang di kho khac\n");
         printf("0. Quay lai\n");
         printf("Nhap lua chon cua ban: ");
         scanf("%d", &choice);
 
-        switch (choice) {
+                switch (choice) {
             case 1:
                 printf("\nDanh sach kho:\n");
                 for (i = 0; i < MAX_KHO; i++) {
                     printf("Kho %d: %d hang hoa\n", i + 1, soLuongHangHoa[i]);
                 }
+
+                // Thêm l?a ch?n Ki?m tra kho
+                int luaChonKiemTraKho;
+                printf("\nNhap lua chon (1. Kiem tra kho / 0. Quay lai): ");
+                scanf("%d", &luaChonKiemTraKho);
+
+                if (luaChonKiemTraKho == 1) {
+                    int khoCheck;
+                    printf("Nhap so kho can kiem tra (1-%d): ", MAX_KHO);
+                    scanf("%d", &khoCheck);
+                    if (khoCheck < 1 || khoCheck > MAX_KHO) {
+                        printf("Kho khong hop le.\n");
+                    } else {
+                        kiemTraKho(khoCheck - 1); // G?i hàm kiêm tra kho
+                    }
+                }
                 break;
-            case 2:
-                // Ham kiem tra kho se duoc viet o day
-                break;
+            case 2: {
+    	int khoDi, khoDen;
+
+    // Nh?p kho chuy?n di và kho chuy?n d?n
+    	printf("Nhap so kho chuyen di (1-10): ");
+    	scanf("%d", &khoDi);
+    	printf("Nhap so kho chuyen den (1-10): ");
+   	 scanf("%d", &khoDen);
+
+    // Ki?m tra di?u ki?n kho h?p l?
+    	if (khoDi < 1 || khoDi > MAX_KHO || khoDen < 1 || khoDen > MAX_KHO) {
+        printf("Kho chuyen di hoac chuyen den khong hop le. Chi chap nhan tu 1 den 10.\n");
+    }   else if (khoDi == khoDen) {
+        printf("Kho chuyen di va chuyen den phai khac nhau.\n");
+    }   else if (soLuongHangHoa[khoDi - 1] == 0) {
+        printf("Kho %d khong co hang de chuyen.\n", khoDi);
+    }   else {
+        // Th?c hi?n di chuy?n
+        diChuyenHang(khoDi - 1, khoDen - 1);
+    }
+    	break;
+		}
+
             case 3:
-                // Ham di chuyen hang se duoc viet o day
+                themHangVaoKho();
                 break;
             case 4:
-                // Ham them hang vao kho se duoc viet o day
-                break;
-            case 5:
-                // Ham xuat hang di kho khac se duoc viet o day
+                // Hàm xu?t hàng di kho khác s? du?c vi?t ? dây
                 break;
             case 0:
                 printf("\nQuay lai menu chinh.\n");
@@ -181,6 +249,129 @@ void menuKhoNho() {
         }
     } while (choice != 0);
 }
+void kiemTraKho(int khoIndex) {
+	int i;
+    printf("\n--- KIEM TRA KHO %d ---\n", khoIndex + 1);
+    printf("STT   Ma San Pham   Ten San Pham                     Khoi Luong    So Luong   Ngay Nhap\n");
+
+    for (i = 0; i < soLuongHangHoa[khoIndex]; i++) {
+        printf("%-5d %-15s %-30s %-15s %-10d %-15s\n", 
+                i + 1, 
+                khoSmall[khoIndex][i].maSanPham, 
+                khoSmall[khoIndex][i].tenSanPham, 
+                khoSmall[khoIndex][i].khoiLuong, 
+                khoSmall[khoIndex][i].soLuong, 
+                khoSmall[khoIndex][i].ngayNhap);
+    }
+}
+void diChuyenHang(int khoDi, int khoDen) {
+    int i;
+
+    // Ki?m tra n?u kho dích không d? ch? ch?a
+    if (soLuongHangHoa[khoDen] + soLuongHangHoa[khoDi] > MAX_ITEMS) {
+        printf("Kho %d khong du suc chua toan bo hang chuyen den.\n", khoDen + 1);
+        return;
+    }
+
+    // Di chuy?n hàng t? khoDi sang khoDen
+    for (i = 0; i < soLuongHangHoa[khoDi]; i++) {
+        int sttMoi = soLuongHangHoa[khoDen];  // V? trí m?i trong kho dích
+        khoSmall[khoDen][sttMoi] = khoSmall[khoDi][i];  // Sao chép d? li?u d?y d?
+        soLuongHangHoa[khoDen]++;  // Ch? tang khi sao chép thành công
+    }
+
+    // Xóa d? li?u c?a khoDi trong b? nh?
+    for (i = 0; i < soLuongHangHoa[khoDi]; i++) {
+        strcpy(khoSmall[khoDi][i].maSanPham, "");
+        strcpy(khoSmall[khoDi][i].tenSanPham, "");
+        strcpy(khoSmall[khoDi][i].khoiLuong, "");
+        khoSmall[khoDi][i].soLuong = 0;
+        strcpy(khoSmall[khoDi][i].ngayNhap, "");
+    }
+    soLuongHangHoa[khoDi] = 0;  // Ð?t s? lu?ng hàng trong khoDi v? 0
+
+    // C?p nh?t d? li?u file
+    char fileNguon[20], fileDich[20];
+    sprintf(fileNguon, "kho%d.txt", khoDi + 1);
+    sprintf(fileDich, "kho%d.txt", khoDen + 1);
+
+    // Ghi d? li?u m?i vào file dích
+    FILE *file = fopen(fileDich, "w");
+    if (file == NULL) {
+        printf("Khong the ghi du lieu vao file %s.\n", fileDich);
+        return;
+    }
+    for (i = 0; i < soLuongHangHoa[khoDen]; i++) {
+        fprintf(file, "%d %s %s %s %d %s\n", 
+                i + 1, 
+                khoSmall[khoDen][i].maSanPham, 
+                khoSmall[khoDen][i].tenSanPham, 
+                khoSmall[khoDen][i].khoiLuong, 
+                khoSmall[khoDen][i].soLuong,
+                khoSmall[khoDen][i].ngayNhap);
+    }
+    fclose(file);
+
+    file = fopen(fileNguon, "w");
+    if (file != NULL) {
+        fclose(file);
+    } else {
+        printf("Khong the xoa du lieu trong file %s.\n", fileNguon);
+    }
+
+    printf("Da chuyen toan bo hang tu kho %d sang kho %d.\n", khoDi + 1, khoDen + 1);
+}
+void themHangVaoKho() {
+    int khoChon;
+    printf("Ch?n kho d? thêm hàng (1-%d): ", MAX_KHO);
+    scanf("%d", &khoChon);
+    khoChon--; // Chuy?n thành ch? s? m?ng (t? 0 d?n MAX_KHO-1)
+
+    if (khoChon < 0 || khoChon >= MAX_KHO) {
+        printf("Kho không h?p l?.\n");
+        return;
+    }
+
+    if (soLuongHangHoa[khoChon] >= MAX_ITEMS) {
+        printf("Kho dã d?y, không th? thêm hàng.\n");
+        return;
+    }
+
+    HangHoa hangMoi;
+    printf("Nh?p mã s?n ph?m: ");
+    scanf(" %10s", hangMoi.maSanPham);
+    printf("Nh?p tên s?n ph?m: ");
+    scanf(" %50[^\n]", hangMoi.tenSanPham);
+    printf("Nh?p kh?i lu?ng (vd: 3kg): ");
+    scanf(" %20s", hangMoi.khoiLuong);
+    printf("Nh?p s? lu?ng: ");
+    scanf("%d", &hangMoi.soLuong);
+    printf("Nh?p ngày nh?p (dd/mm/yyyy): ");
+    scanf(" %14s", hangMoi.ngayNhap);
+
+    // Thêm hàng m?i vào kho
+    khoSmall[khoChon][soLuongHangHoa[khoChon]] = hangMoi;
+    soLuongHangHoa[khoChon]++;
+
+    // Luu l?i vào file
+    char tenFile[20];
+    sprintf(tenFile, "kho%d.txt", khoChon + 1);
+    FILE *file = fopen(tenFile, "a");
+    if (file != NULL) {
+        fprintf(file, "%d %s %s %s %d %s\n", 
+                soLuongHangHoa[khoChon], 
+                hangMoi.maSanPham, 
+                hangMoi.tenSanPham, 
+                hangMoi.khoiLuong, 
+                hangMoi.soLuong, 
+                hangMoi.ngayNhap);
+        fclose(file);
+        printf("Thêm hàng vào kho %d thành công.\n", khoChon + 1);
+    } else {
+        printf("Không th? ghi vào file.\n");
+    }
+}
+
 
 // Menu Hang Hoa
 void menuHangHoa() {
